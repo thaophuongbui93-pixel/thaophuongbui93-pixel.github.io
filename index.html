@@ -85,7 +85,7 @@
   <div class="grid kpis">
     <div class="kpi navy"><div class="lab">Tồn quỹ công ty (ngày được chọn)</div><div class="val" id="k_fund">—</div><div class="note" id="k_fund_n"></div></div>
     <div class="kpi red"><div class="lab">Dòng tiền thuần trong ngày</div><div class="val" id="k_net">—</div><div class="note" id="k_net_n"></div></div>
-    <div class="kpi blue"><div class="lab">Số dư ngân hàng (BVBank)</div><div class="val" id="k_bank">—</div><div class="note">TK 0045678888888</div></div>
+    <div class="kpi blue"><div class="lab">Số dư ngân hàng (tất cả TK · 16/06)</div><div class="val" id="k_bank">—</div><div class="note" id="k_bank_n">—</div></div>
     <div class="kpi red"><div class="lab">Nợ đến hạn 18/06</div><div class="val" id="k_due">125.752.030</div><div class="note">Quỹ khách TK …004 (556,2tr đã thu sớm 15/06)</div></div>
     <div class="kpi green"><div class="lab">Tổng thu (lũy kế đến ngày chọn)</div><div class="val" id="k_cthu">—</div><div class="note" id="k_cthu_n"></div></div>
     <div class="kpi red"><div class="lab">Tổng chi (lũy kế đến ngày chọn)</div><div class="val" id="k_cchi">—</div><div class="note" id="k_cchi_n"></div></div>
@@ -164,6 +164,15 @@ const chi_cap=[0,0,0,0,250000000,0,0,0,0,0,0,0,0,0];
 const chi_oth=[0,0,0,0,0,0,0,0,0,0,16860000,0,0,0];
 const bankEOD=[null,null,null,null,null,null,null,null,351694273,1040778813,933395929,1066617750,161546533,352973667];
 const DUE=125752030;
+// === Số dư cuối kỳ TẤT CẢ ngân hàng — đồng bộ nguồn Cashflow NGAY['2026-06-16'].banks ===
+// Sửa giá trị v ở đây khi số dư đổi -> KPI tổng & bảng tự cập nhật.
+const banksEOD16=[
+  {n:'BVBank', acc:'0045678888888', v:352973667},
+  {n:'VPBank', acc:'', v:1886198},
+  {n:'TPBank', acc:'', v:1370146},
+  {n:'Vietcombank', acc:'', v:903698}
+];
+const BANKS_TOTAL16=banksEOD16.reduce((a,b)=>a+b.v,0);
 const bank=[
  [10,'10/06 11:16','Chuyển nội bộ TPBank → BVBank',150000000,179504673],
  [10,'10/06 11:18','Chuyển nội bộ VPBank → BVBank',256500000,436004673],
@@ -269,7 +278,8 @@ function render(idx){
   document.getElementById('k_net').textContent=fmt(net);
   document.getElementById('k_net').className='val';document.getElementById('k_net').style.color=net<0?'var(--red)':'var(--green)';
   document.getElementById('k_net_n').textContent=net<0?`Chi ${fmtShort(chi[idx])} > Thu ${fmtShort(thu[idx])}`:`Thu ${fmtShort(thu[idx])} ≥ Chi ${fmtShort(chi[idx])}`;
-  document.getElementById('k_bank').textContent=bankEOD[idx]!==null?fmt(bankEOD[idx]):'(chưa có số liệu)';
+  document.getElementById('k_bank').textContent=fmt(BANKS_TOTAL16);
+  document.getElementById('k_bank_n').textContent='Tổng '+banksEOD16.length+' TK: '+banksEOD16.map(b=>b.n).join(' · ');
   document.getElementById('k_cthu').textContent=fmt(sumTo(thu,idx));document.getElementById('k_cthu_n').textContent=`01/06 → ${labels[idx]}`;
   document.getElementById('k_cchi').textContent=fmt(sumTo(chi,idx));document.getElementById('k_cchi_n').textContent=`01/06 → ${labels[idx]}`;
   document.getElementById('k_op').textContent=fmt(sumTo(thu_op,idx)-sumTo(chi_op,idx));
@@ -314,15 +324,9 @@ labels.forEach((l,i)=>{const o=document.createElement('option');o.value=i;o.text
 sel.addEventListener('change',()=>render(+sel.value));
 render(labels.length-1);
 
-// === Tong hop so du tat ca ngan hang (cuoi ky 16/06 - dong bo nguon Cashflow) ===
-const banksEOD16=[
-  {n:'BVBank', acc:'0045678888888', v:352973667},
-  {n:'VPBank', acc:'', v:1886198},
-  {n:'TPBank', acc:'', v:1370146},
-  {n:'Vietcombank', acc:'', v:903698}
-];
+// Bảng chi tiết số dư — dùng banksEOD16 & BANKS_TOTAL16 (định nghĩa ở phần dữ liệu phía trên)
 (function(){
-  const total=banksEOD16.reduce((a,b)=>a+b.v,0);
+  const total=BANKS_TOTAL16;
   document.querySelector('#bankSumT tbody').innerHTML=banksEOD16.map(b=>
     `<tr><td style="text-align:left">${b.n}${b.acc?` <span style="color:#98A2B3;font-size:11px">(${b.acc})</span>`:''}</td><td><b>${fmt(b.v)}</b></td><td>${(b.v/total*100).toFixed(1)}%</td></tr>`).join('');
   document.getElementById('bankTotal').textContent=fmt(total);
