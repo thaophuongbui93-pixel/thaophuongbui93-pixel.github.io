@@ -107,6 +107,14 @@
       <div style="display:flex;align-items:center;gap:10px"><svg id="dOut" viewBox="0 0 160 160" width="160" height="160"></svg><div id="dOutLeg" style="font-size:12.5px;flex:1"></div></div></div>
   </div>
 
+  <h2 class="sec">Số dư ngân hàng — tổng hợp tất cả tài khoản (cập nhật đến hết 16/06)</h2>
+  <div class="panel">
+    <h3>💰 Số dư cuối kỳ các tài khoản ngân hàng — 16/06/2026</h3>
+    <table id="bankSumT"><thead><tr><th>Ngân hàng</th><th>Số dư cuối kỳ 16/06 (VND)</th><th>Tỷ trọng</th></tr></thead><tbody></tbody>
+      <tfoot><tr><td style="text-align:left;font-weight:700;background:#EEF3FB;color:var(--navy)">TỔNG SỐ DƯ TẤT CẢ NGÂN HÀNG</td><td id="bankTotal" style="font-weight:700;background:#EEF3FB;color:var(--navy)">—</td><td style="background:#EEF3FB;color:var(--navy);font-weight:700">100%</td></tr></tfoot></table>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:8px;font-style:italic">Đồng bộ với số dư cuối ngày 16/06 trong Cashflow (BVBank · VPBank · TPBank · Vietcombank). Tổng tự động cộng từ dữ liệu.</div>
+  </div>
+
   <h2 class="sec">Biến động số dư ngân hàng (BVBank · từ SMS)</h2>
   <div class="panel">
     <table id="bankT"><thead><tr><th>Ngày giờ</th><th>Nội dung giao dịch</th><th>Phát sinh</th><th>Số dư sau GD</th></tr></thead><tbody></tbody></table>
@@ -305,6 +313,20 @@ const sel=document.getElementById('dateSel');
 labels.forEach((l,i)=>{const o=document.createElement('option');o.value=i;o.textContent=l+'/2026';if(i===labels.length-1)o.selected=true;sel.appendChild(o);});
 sel.addEventListener('change',()=>render(+sel.value));
 render(labels.length-1);
+
+// === Tong hop so du tat ca ngan hang (cuoi ky 16/06 - dong bo nguon Cashflow) ===
+const banksEOD16=[
+  {n:'BVBank', acc:'0045678888888', v:352973667},
+  {n:'VPBank', acc:'', v:1886198},
+  {n:'TPBank', acc:'', v:1370146},
+  {n:'Vietcombank', acc:'', v:903698}
+];
+(function(){
+  const total=banksEOD16.reduce((a,b)=>a+b.v,0);
+  document.querySelector('#bankSumT tbody').innerHTML=banksEOD16.map(b=>
+    `<tr><td style="text-align:left">${b.n}${b.acc?` <span style="color:#98A2B3;font-size:11px">(${b.acc})</span>`:''}</td><td><b>${fmt(b.v)}</b></td><td>${(b.v/total*100).toFixed(1)}%</td></tr>`).join('');
+  document.getElementById('bankTotal').textContent=fmt(total);
+})();
 </script>
 </body>
 </html>
