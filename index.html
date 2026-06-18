@@ -67,7 +67,7 @@
   <div class="top" style="max-width:1140px;margin:0 auto">
     <div>
       <h1>BẢNG ĐIỀU KHIỂN CHU KỲ TIỀN — XƯỞNG NỘI THẤT HD</h1>
-      <div class="sub">Trợ lý Chủ tịch · Giám sát Tài chính – Kế toán &nbsp;|&nbsp; Theo dõi dòng tiền & thanh khoản hằng ngày</div>
+      <div class="sub">Theo dõi dòng tiền & thanh khoản hằng ngày</div>
       <a class="cashbtn" href="cashflow.html" title="Xem báo cáo dòng tiền / chứng từ">💵 CASHFLOW <span class="ar">→</span></a>
     </div>
     <div class="selbox">
@@ -79,7 +79,6 @@
 </header>
 
 <div class="wrap">
-  <div class="ribbon" id="ribbon"></div>
 
   <h2 class="sec" id="secDay">Tóm tắt chu kỳ tiền trong ngày</h2>
   <div class="grid kpis">
@@ -115,8 +114,13 @@
     <div style="font-size:11.5px;color:var(--muted);margin-top:8px;font-style:italic">Đồng bộ với số dư cuối ngày 17/06 trong Cashflow (BVBank · VPBank · TPBank · Vietcombank). Tổng tự động cộng từ dữ liệu.</div>
   </div>
 
-  <h2 class="sec">Biến động số dư ngân hàng (BVBank · từ SMS)</h2>
+  <h2 class="sec">Số dư ngân hàng theo ngày chọn — 4 tài khoản & biến động BVBank</h2>
   <div class="panel">
+    <h3 id="bankDayTitle">Số dư cuối ngày từng ngân hàng</h3>
+    <table id="bankDayT"><thead><tr><th>Ngân hàng</th><th>Số dư cuối ngày (VND)</th></tr></thead><tbody></tbody>
+      <tfoot><tr><td style="text-align:left;font-weight:700;background:#EEF3FB;color:var(--navy)">TỔNG SỐ DƯ TOÀN HỆ THỐNG</td><td id="bankDayTotal" style="font-weight:700;background:#EEF3FB;color:var(--navy)">—</td></tr></tfoot></table>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic">Số dư đổi theo ngày chọn ở góc trên. Ngoài BVBank, các ngân hàng khác chỉ có số liệu từ 15/06; ngày chưa có sẽ hiện (chưa có).</div>
+    <h3 style="margin-top:16px">Biến động chi tiết BVBank (từ SMS)</h3>
     <table id="bankT"><thead><tr><th>Ngày giờ</th><th>Nội dung giao dịch</th><th>Phát sinh</th><th>Số dư sau GD</th></tr></thead><tbody></tbody></table>
     <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ Bảng theo dõi BVBank (theo ngày chọn). 15/06 đã có thêm ảnh VPBank/TPBank/VCBank — số dư cuối ~: TPBank 1,37tr · VCBank 0,90tr · VPBank đang trả lương. 14/06 thiếu SMS BVBank (gộp vào dòng 14–15/06).</div>
   </div>
@@ -164,15 +168,24 @@ const chi_cap=[0,0,0,0,250000000,0,0,0,0,0,0,0,0,0,0];
 const chi_oth=[0,0,0,0,0,0,0,0,0,0,16860000,0,0,0,74251];
 const bankEOD=[null,null,null,null,null,null,null,null,351694273,1040778813,933395929,1066617750,161546533,352973667,44962371];
 const DUE=125752030;
-// === Số dư cuối kỳ TẤT CẢ ngân hàng — đồng bộ nguồn Cashflow NGAY['2026-06-17'].banks ===
-// Sửa giá trị v ở đây khi số dư đổi -> KPI tổng & bảng tự cập nhật.
-const banksEOD16=[
-  {n:'BVBank', acc:'0045678888888', v:44962371},
-  {n:'VPBank', acc:'', v:95572624},
-  {n:'TPBank', acc:'', v:1370146},
-  {n:'Vietcombank', acc:'', v:903698}
-];
-const BANKS_TOTAL16=banksEOD16.reduce((a,b)=>a+b.v,0);
+// === Số dư cuối ngày từng ngân hàng — đồng bộ nguồn Cashflow ===
+// BVBank lấy theo ngày từ mảng bankEOD ở trên. Các NH khác chỉ có số liệu từ 15/06 trở đi.
+// CẬP NHẬT HẰNG NGÀY: thêm số dư VPBank/TPBank/Vietcombank của ngày mới vào otherBanksByDay (khóa = số ngày trong dayNum).
+const BANK_LIST=['BVBank','VPBank','TPBank','Vietcombank'];
+const BANK_ACC={BVBank:'0045678888888'};
+const otherBanksByDay={
+  15:{VPBank:242886198, TPBank:1370146, Vietcombank:903698},
+  16:{VPBank:1886198,   TPBank:1370146, Vietcombank:903698},
+  17:{VPBank:95572624,  TPBank:1370146, Vietcombank:903698}
+};
+function banksOfDay(idx){
+  const ob=otherBanksByDay[dayNum[idx]]||{};
+  return {BVBank:(bankEOD[idx]!=null?bankEOD[idx]:null), VPBank:ob.VPBank??null, TPBank:ob.TPBank??null, Vietcombank:ob.Vietcombank??null};
+}
+function bankTotalOfDay(idx){const b=banksOfDay(idx);return BANK_LIST.reduce((a,n)=>a+(b[n]||0),0);}
+const _LASTBANK=labels.length-1;
+const banksEOD16=BANK_LIST.map(n=>({n, acc:BANK_ACC[n]||'', v:banksOfDay(_LASTBANK)[n]}));
+const BANKS_TOTAL16=bankTotalOfDay(_LASTBANK);
 const bank=[
  [10,'10/06 11:16','Chuyển nội bộ TPBank → BVBank',150000000,179504673],
  [10,'10/06 11:18','Chuyển nội bộ VPBank → BVBank',256500000,436004673],
@@ -300,11 +313,6 @@ function render(idx){
   document.getElementById('k_op').textContent=fmt(sumTo(thu_op,idx)-sumTo(chi_op,idx));
   const buf=fund[idx]-DUE;document.getElementById('k_buf').textContent=fmt(buf);
   document.getElementById('k_buf').style.color=buf<300000000?'var(--red)':'var(--amber)';
-  // ribbon
-  const dleft=18-dn;
-  document.getElementById('ribbon').innerHTML = dleft>0
-   ? `<span class="cd">⏳ ${dleft} NGÀY</span><span>tới hạn trả <b>Quỹ khách còn lại 125.752.030 đ</b> (18/06). Khoản 556,2tr đã bị NH THU SỚM ngày 15/06. Đệm sau trả nợ theo sổ <b>~${fmtShort(buf)}</b> — lưu ý số dư NH thực thấp hơn tồn quỹ sổ.</span>`
-   : `<span class="cd">● 18/06</span><span>Còn <b>125.752.030 đ</b> Quỹ khách đến hạn (556,2tr đã thu sớm 15/06). Theo dõi sát số dư NH thực.</span>`;
   // charts
   const sl=idx+1;
   lineChart('cFund',labels.slice(0,sl),fund.slice(0,sl),'#1F3864');
@@ -316,6 +324,11 @@ function render(idx){
   document.querySelector('#bankT tbody').innerHTML = rowsB.length
     ? rowsB.map(b=>`<tr><td>${b[1]}</td><td style="text-align:left">${b[2]}</td><td class="${b[3]>0?'pos':'neg'}">${b[3]>0?'+':'−'}${fmt(Math.abs(b[3]))}</td><td><b>${fmt(b[4])}</b></td></tr>`).join('')
     : `<tr><td colspan="4" style="text-align:center;color:#98A2B3;padding:14px">(Chưa có biến động số dư ngân hàng tính đến ${labels[idx]})</td></tr>`;
+  // Số dư 4 ngân hàng theo ngày chọn
+  document.getElementById('bankDayTitle').textContent=`Số dư cuối ngày từng ngân hàng — ${labels[idx]}`;
+  const _bo=banksOfDay(idx);
+  document.querySelector('#bankDayT tbody').innerHTML=BANK_LIST.map(n=>`<tr><td style="text-align:left">${n}${BANK_ACC[n]?` <span style="color:#98A2B3;font-size:11px">(${BANK_ACC[n]})</span>`:''}</td><td>${_bo[n]!=null?'<b>'+fmt(_bo[n])+'</b>':'<span style="color:#98A2B3">(chưa có)</span>'}</td></tr>`).join('');
+  document.getElementById('bankDayTotal').textContent=fmt(bankTotalOfDay(idx));
   // alerts
   document.getElementById('alerts').innerHTML=alertsFor(idx).map(a=>`<div class="alert ${a.c}"><div class="t">${a.t}</div><div class="d">${a.d}</div></div>`).join('');
   // forecast + narrative
