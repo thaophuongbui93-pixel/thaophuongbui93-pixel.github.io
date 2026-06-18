@@ -97,8 +97,8 @@ Việc cần làm:
    thu_op, thu_fin, thu_oth, chi_op, chi_fin, chi_cap, chi_oth, bankEOD.
 2) Thêm các giao dịch BVBank trong ngày vào mảng bank:
    [17,'17/06 HH:MM','nội dung GD', ±số tiền, số dư sau GD].
-3) Cập nhật banksEOD16 = số dư cuối kỳ TẤT CẢ ngân hàng (BVBank/VPBank/TPBank/Vietcombank)
-   để KPI "Số dư ngân hàng" và dòng TỔNG tự cộng lại.
+3) Cập nhật số dư VPBank/TPBank/Vietcombank của ngày mới vào otherBanksByDay (BVBank đã có ở bankEOD)
+   để KPI tổng, mục tổng hợp & bảng số dư 4 NH theo ngày tự cập nhật.
 4) Cập nhật text "Dữ liệu 01–17/06" (ô góc trên + footer).
 Đảm bảo MỌI mảng có cùng số phần tử. Chỉ thêm/cập nhật dữ liệu, không sửa bố cục/chức năng khác.
 Báo lại tổng số dư ngân hàng mới.
@@ -204,7 +204,7 @@ Khu vực mảng dữ liệu (tìm `const labels=`). **Mỗi mảng append đún
 - `fund`, `thu`, `chi`, `thu_op`, `thu_fin`, `thu_oth`, `chi_op`, `chi_fin`, `chi_cap`, `chi_oth` ← giá trị của ngày
 - `bankEOD` ← số dư BVBank cuối ngày (chưa có ảnh SMS → để `null`)
 - `bank` (tìm `const bank=`): thêm từng giao dịch BVBank trong ngày theo mẫu `[17,'17/06 HH:MM','nội dung GD', SỐ_TIỀN, SỐ_DƯ_SAU_GD]` — tiền ra để **số âm**, tiền vào để **số dương**.
-- `banksEOD16` (tìm `const banksEOD16=`): cập nhật `v` (số dư) của từng ngân hàng theo số dư cuối kỳ mới → **KPI "Số dư ngân hàng" và dòng TỔNG tự cộng lại**. Nếu dời mốc "cuối kỳ" sang ngày mới hơn, sửa luôn chữ **"16/06"** ở nhãn KPI và tiêu đề mục cho khớp.
+- `otherBanksByDay` (tìm `const otherBanksByDay=`): thêm số dư VPBank/TPBank/Vietcombank của ngày mới, khóa = số ngày (vd `17`). BVBank đã nằm trong `bankEOD` ở trên. KPI tổng, mục tổng hợp & bảng số dư 4 NH theo ngày sẽ TỰ cập nhật (`banksEOD16`/`BANKS_TOTAL16` nay tự suy ra theo ngày mới nhất, không sửa tay). Vẫn cần đổi chữ ngày hiển thị (vd 17/06) ở nhãn KPI + tiêu đề mục tổng hợp cho khớp.
 - Text **"Dữ liệu 01–DD/06"** (ô góc trên + footer): cập nhật `DD` thành ngày mới nhất.
 
 > **Quy ước:** ngày **không có ảnh SMS BVBank** → `bankEOD` = `null` (KPI sẽ hiện "(chưa có số liệu)" — đúng, **không bịa số**).
