@@ -106,23 +106,15 @@
       <div style="display:flex;align-items:center;gap:10px"><svg id="dOut" viewBox="0 0 160 160" width="160" height="160"></svg><div id="dOutLeg" style="font-size:12.5px;flex:1"></div></div></div>
   </div>
 
-  <h2 class="sec">Số dư ngân hàng — tổng hợp tất cả tài khoản (cập nhật đến hết 18/06)</h2>
-  <div class="panel">
-    <h3>💰 Số dư cuối kỳ các tài khoản ngân hàng — 18/06/2026</h3>
-    <table id="bankSumT"><thead><tr><th>Ngân hàng</th><th>Số dư cuối kỳ 18/06 (VND)</th><th>Tỷ trọng</th></tr></thead><tbody></tbody>
-      <tfoot><tr><td style="text-align:left;font-weight:700;background:#EEF3FB;color:var(--navy)">TỔNG SỐ DƯ TẤT CẢ NGÂN HÀNG</td><td id="bankTotal" style="font-weight:700;background:#EEF3FB;color:var(--navy)">—</td><td style="background:#EEF3FB;color:var(--navy);font-weight:700">100%</td></tr></tfoot></table>
-    <div style="font-size:11.5px;color:var(--muted);margin-top:8px;font-style:italic">Đồng bộ với số dư cuối ngày 18/06 trong Cashflow (BVBank · VPBank · TPBank · Vietcombank). Tổng tự động cộng từ dữ liệu.</div>
-  </div>
-
-  <h2 class="sec">Số dư ngân hàng theo ngày chọn — 4 tài khoản & biến động BVBank</h2>
+  <h2 class="sec">Số dư ngân hàng theo ngày chọn — 4 tài khoản & biến động ngân hàng</h2>
   <div class="panel">
     <h3 id="bankDayTitle">Số dư cuối ngày từng ngân hàng</h3>
     <table id="bankDayT"><thead><tr><th>Ngân hàng</th><th>Số dư cuối ngày (VND)</th></tr></thead><tbody></tbody>
       <tfoot><tr><td style="text-align:left;font-weight:700;background:#EEF3FB;color:var(--navy)">TỔNG SỐ DƯ TOÀN HỆ THỐNG</td><td id="bankDayTotal" style="font-weight:700;background:#EEF3FB;color:var(--navy)">—</td></tr></tfoot></table>
     <div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic">Số dư đổi theo ngày chọn ở góc trên. Ngoài BVBank, các ngân hàng khác chỉ có số liệu từ 15/06; ngày chưa có sẽ hiện (chưa có).</div>
-    <h3 style="margin-top:16px">Biến động chi tiết BVBank (từ SMS)</h3>
-    <table id="bankT"><thead><tr><th>Ngày giờ</th><th>Nội dung giao dịch</th><th>Phát sinh</th><th>Số dư sau GD</th></tr></thead><tbody></tbody></table>
-    <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ Bảng theo dõi BVBank (theo ngày chọn). 15/06 đã có thêm ảnh VPBank/TPBank/VCBank — số dư cuối ~: TPBank 1,37tr · VCBank 0,90tr · VPBank đang trả lương. 14/06 thiếu SMS BVBank (gộp vào dòng 14–15/06).</div>
+    <h3 style="margin-top:16px">Biến động số dư ngân hàng theo ngày chọn</h3>
+    <table id="bankT"><thead><tr><th>Ngân hàng</th><th>Ngày giờ</th><th>Nội dung giao dịch</th><th>Phát sinh</th><th>Số dư sau GD</th></tr></thead><tbody></tbody></table>
+    <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ BVBank có chi tiết từng giao dịch (từ SMS). VPBank/TPBank/Vietcombank hiện chỉ có số dư cuối ngày → hiển thị biến động RÒNG suy từ số dư (chưa số hóa chi tiết SMS), hoặc "Không có biến động" nếu số dư không đổi.</div>
   </div>
 
   <h2 class="sec">Cảnh báo trọng yếu</h2>
@@ -328,11 +320,39 @@ function render(idx){
   barChart('cBars',labels.slice(0,sl),thu.slice(0,sl),chi.slice(0,sl),'#2E7D32','#C00000');
   donut('dIn','dInLeg',[{l:'Thu hoạt động (KH)',v:sumTo(thu_op,idx),c:'#2E7D32'},{l:'Thu vay & tài chính',v:sumTo(thu_fin,idx),c:'#C00000'},{l:'Thu khác/hoàn quỹ',v:sumTo(thu_oth,idx),c:'#BF8F00'}]);
   donut('dOut','dOutLeg',[{l:'Vật tư/NCC & vận hành',v:sumTo(chi_op,idx),c:'#2E5496'},{l:'Lãi vay & trả gốc',v:sumTo(chi_fin,idx),c:'#C00000'},{l:'Đầu tư (CAPEX)',v:sumTo(chi_cap,idx),c:'#1F7A7A'},{l:'Khác/Chi hộ',v:sumTo(chi_oth,idx),c:'#BF8F00'}]);
-  // bank table (<= selected day)
-  const rowsB=bank.filter(b=>b[0]<=dn);
-  document.querySelector('#bankT tbody').innerHTML = rowsB.length
-    ? rowsB.map(b=>`<tr><td>${b[1]}</td><td style="text-align:left">${b[2]}</td><td class="${b[3]>0?'pos':'neg'}">${b[3]>0?'+':'−'}${fmt(Math.abs(b[3]))}</td><td><b>${fmt(b[4])}</b></td></tr>`).join('')
-    : `<tr><td colspan="4" style="text-align:center;color:#98A2B3;padding:14px">(Chưa có biến động số dư ngân hàng tính đến ${labels[idx]})</td></tr>`;
+  // bank table — biến động 4 ngân hàng TRONG ngày chọn
+  (function(){
+    function prevBal(n){for(let j=idx-1;j>=0;j--){const v=banksOfDay(j)[n];if(v!=null)return v;}return null;}
+    const row=(bk,time,desc,amt,bal)=>`<tr><td style="text-align:left"><b>${bk}</b></td><td>${time}</td><td style="text-align:left">${desc}</td><td>${amt}</td><td>${bal}</td></tr>`;
+    const mut=t=>`<span style="color:#98A2B3">${t}</span>`;
+    let html='';
+    BANK_LIST.forEach(n=>{
+      if(n==='BVBank'){
+        const tx=bank.filter(b=>b[0]===dn);
+        if(tx.length){
+          html += tx.map(b=>`<tr><td style="text-align:left"><b>BVBank</b></td><td>${b[1]}</td><td style="text-align:left">${b[2]}</td><td class="${b[3]>0?'pos':'neg'}">${b[3]>0?'+':'−'}${fmt(Math.abs(b[3]))}</td><td><b>${fmt(b[4])}</b></td></tr>`).join('');
+        } else {
+          html += row('BVBank','—',mut('Không có biến động'),'—', bankEOD[idx]!=null?('<b>'+fmt(bankEOD[idx])+'</b>'):'—');
+        }
+      } else {
+        const cur=banksOfDay(idx)[n];
+        if(cur==null){
+          html += row(n,'—',mut('(chưa có số liệu)'),'—','—');
+        } else {
+          const pv=prevBal(n);
+          if(pv==null){
+            html += row(n,'—','Số dư ghi nhận đầu kỳ theo dõi '+mut('(chưa có chi tiết SMS)'),'—','<b>'+fmt(cur)+'</b>');
+          } else if(cur!==pv){
+            const d=cur-pv;
+            html += row(n,'—','Biến động ròng trong ngày '+mut('(chưa có chi tiết SMS)'), `<span style="color:${d>0?'var(--green)':'var(--red)'};font-weight:600">${d>0?'+':'−'}${fmt(Math.abs(d))}</span>`, '<b>'+fmt(cur)+'</b>');
+          } else {
+            html += row(n,'—',mut('Không có biến động'),'—','<b>'+fmt(cur)+'</b>');
+          }
+        }
+      }
+    });
+    document.querySelector('#bankT tbody').innerHTML=html;
+  })();
   // Số dư 4 ngân hàng theo ngày chọn
   document.getElementById('bankDayTitle').textContent=`Số dư cuối ngày từng ngân hàng — ${labels[idx]}`;
   const _bo=banksOfDay(idx);
@@ -360,14 +380,6 @@ const sel=document.getElementById('dateSel');
 labels.forEach((l,i)=>{const o=document.createElement('option');o.value=i;o.textContent=l+'/2026';if(i===labels.length-1)o.selected=true;sel.appendChild(o);});
 sel.addEventListener('change',()=>render(+sel.value));
 render(labels.length-1);
-
-// Bảng chi tiết số dư — dùng banksEOD16 & BANKS_TOTAL16 (định nghĩa ở phần dữ liệu phía trên)
-(function(){
-  const total=BANKS_TOTAL16;
-  document.querySelector('#bankSumT tbody').innerHTML=banksEOD16.map(b=>
-    `<tr><td style="text-align:left">${b.n}${b.acc?` <span style="color:#98A2B3;font-size:11px">(${b.acc})</span>`:''}</td><td><b>${fmt(b.v)}</b></td><td>${(b.v/total*100).toFixed(1)}%</td></tr>`).join('');
-  document.getElementById('bankTotal').textContent=fmt(total);
-})();
 </script>
 </body>
 </html>
