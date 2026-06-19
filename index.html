@@ -114,7 +114,7 @@
     <div style="font-size:11.5px;color:var(--muted);margin-top:6px;font-style:italic">Số dư đổi theo ngày chọn ở góc trên. Ngoài BVBank, các ngân hàng khác chỉ có số liệu từ 15/06; ngày chưa có sẽ hiện (chưa có).</div>
     <h3 style="margin-top:16px">Biến động số dư ngân hàng theo ngày chọn</h3>
     <table id="bankT"><thead><tr><th>Ngân hàng</th><th>Ngày giờ</th><th>Nội dung giao dịch</th><th>Phát sinh</th><th>Số dư sau GD</th></tr></thead><tbody></tbody></table>
-    <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ BVBank có chi tiết từng giao dịch (từ SMS). VPBank/TPBank/Vietcombank hiện chỉ có số dư cuối ngày → hiển thị biến động RÒNG suy từ số dư (chưa số hóa chi tiết SMS), hoặc "Không có biến động" nếu số dư không đổi.</div>
+    <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ Liệt kê giao dịch số hóa từ ảnh SMS theo ngày chọn. Ngân hàng/ngày chưa số hóa chi tiết → hiện "Biến động ròng" (suy từ số dư cuối ngày) hoặc "Không có biến động" nếu số dư không đổi.</div>
   </div>
 
   <h2 class="sec">Cảnh báo trọng yếu</h2>
@@ -171,6 +171,22 @@ const otherBanksByDay={
   17:{VPBank:95572624,  TPBank:1370146, Vietcombank:903698},
   18:{VPBank:95594830,  TPBank:1370146, Vietcombank:903698}
 };
+// === Giao dịch chi tiết các ngân hàng ngoài BVBank (số hóa từ ảnh SMS) ===
+// Mỗi dòng: [dayNum, 'DD/MM HH:MM', 'nội dung', ±số tiền, số dư sau GD].
+const VPBankTx=[
+  [18,'18/06 08:33','Vũ Thị Hải Hằng nộp tiền mặt vào TK (132189258)',108984000,204556624],
+  [18,'18/06 12:43','Hexagon JSC thanh toán hóa đơn 00000043',27993449,232550073],
+  [18,'18/06 13:15','HDfurniture CK cho cty CN Thiên Hợp',-108983880,123566193],
+  [18,'18/06 14:42','HDfurniture CK cho cty Duy Bình',-1652400,121913793],
+  [18,'18/06 15:01','HDfurniture CK cho cty Duy Bình',-1872451,120041342],
+  [18,'18/06 16:25','HDfurniture CK cho cty đá Lâm Anh',-2613600,117427742],
+  [18,'18/06 17:29','HDfurniture CK cho cty Tân Viên',-1680264,115747478],
+  [18,'18/06 17:30','HDfurniture CK cho cty Vân Nhân',-6476920,109270558],
+  [18,'18/06 17:31','HDfurniture CK cho cty Ải Linh',-6458000,102812558],
+  [18,'18/06 17:32','HDfurniture đặt cọc cho cty Ải Linh',-7000000,95812558],
+  [18,'18/06 17:32','HDfurniture CK cho cty Sel Global',-217728,95594830]
+];
+const otherBankTx={VPBank:VPBankTx, TPBank:[], Vietcombank:[]};
 function banksOfDay(idx){
   const ob=otherBanksByDay[dayNum[idx]]||{};
   return {BVBank:(bankEOD[idx]!=null?bankEOD[idx]:null), VPBank:ob.VPBank??null, TPBank:ob.TPBank??null, Vietcombank:ob.Vietcombank??null};
@@ -325,29 +341,21 @@ function render(idx){
     function prevBal(n){for(let j=idx-1;j>=0;j--){const v=banksOfDay(j)[n];if(v!=null)return v;}return null;}
     const row=(bk,time,desc,amt,bal)=>`<tr><td style="text-align:left"><b>${bk}</b></td><td>${time}</td><td style="text-align:left">${desc}</td><td>${amt}</td><td>${bal}</td></tr>`;
     const mut=t=>`<span style="color:#98A2B3">${t}</span>`;
+    const amtCell=v=>`<span style="color:${v>0?'var(--green)':'var(--red)'};font-weight:600">${v>0?'+':'−'}${fmt(Math.abs(v))}</span>`;
     let html='';
     BANK_LIST.forEach(n=>{
-      if(n==='BVBank'){
-        const tx=bank.filter(b=>b[0]===dn);
-        if(tx.length){
-          html += tx.map(b=>`<tr><td style="text-align:left"><b>BVBank</b></td><td>${b[1]}</td><td style="text-align:left">${b[2]}</td><td class="${b[3]>0?'pos':'neg'}">${b[3]>0?'+':'−'}${fmt(Math.abs(b[3]))}</td><td><b>${fmt(b[4])}</b></td></tr>`).join('');
-        } else {
-          html += row('BVBank','—',mut('Không có biến động'),'—', bankEOD[idx]!=null?('<b>'+fmt(bankEOD[idx])+'</b>'):'—');
-        }
+      const src = (n==='BVBank'?bank:(otherBankTx[n]||[]));
+      const tx = src.filter(b=>b[0]===dn);
+      if(tx.length){
+        html += tx.map(b=>row(n, b[1], b[2], amtCell(b[3]), '<b>'+fmt(b[4])+'</b>')).join('');
       } else {
         const cur=banksOfDay(idx)[n];
-        if(cur==null){
-          html += row(n,'—',mut('(chưa có số liệu)'),'—','—');
-        } else {
+        if(cur==null){ html += row(n,'—',mut('(chưa có số liệu)'),'—','—'); }
+        else {
           const pv=prevBal(n);
-          if(pv==null){
-            html += row(n,'—','Số dư ghi nhận đầu kỳ theo dõi '+mut('(chưa có chi tiết SMS)'),'—','<b>'+fmt(cur)+'</b>');
-          } else if(cur!==pv){
-            const d=cur-pv;
-            html += row(n,'—','Biến động ròng trong ngày '+mut('(chưa có chi tiết SMS)'), `<span style="color:${d>0?'var(--green)':'var(--red)'};font-weight:600">${d>0?'+':'−'}${fmt(Math.abs(d))}</span>`, '<b>'+fmt(cur)+'</b>');
-          } else {
-            html += row(n,'—',mut('Không có biến động'),'—','<b>'+fmt(cur)+'</b>');
-          }
+          if(pv==null){ html += row(n,'—','Số dư ghi nhận đầu kỳ theo dõi '+mut('(chưa có chi tiết SMS)'),'—','<b>'+fmt(cur)+'</b>'); }
+          else if(cur!==pv){ html += row(n,'—','Biến động ròng trong ngày '+mut('(chưa có chi tiết SMS)'), amtCell(cur-pv), '<b>'+fmt(cur)+'</b>'); }
+          else { html += row(n,'—',mut('Không có biến động'),'—','<b>'+fmt(cur)+'</b>'); }
         }
       }
     });
