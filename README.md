@@ -50,6 +50,40 @@ Sau khi site mới chạy ổn → **xóa repo cũ tên `index.html`** trên Git
 
 ---
 
+## ⭐ QUY TRÌNH CHUẨN — cập nhật 1 ngày (9 bước, Claude tự chạy)
+
+> **Prompt vận hành duy nhất** (chỉ cần dán, đổi ngày):
+>
+> *"Cập nhật website cho ngày [DD/MM/YYYY] theo README: đọc dữ liệu từ Báo cáo ngày và Chứng từ, tách ảnh nếu chưa có, cập nhật cashflow.html và index.html, nhúng chứng từ, đối chiếu dữ liệu và báo cáo kết quả."*
+>
+> Claude tự thực hiện trọn 9 bước dưới đây, không cần hướng dẫn thêm.
+
+| Bước | Việc | Vị trí / Quy tắc |
+|---|---|---|
+| 1 | Đọc file **DOCX** phiếu thu/chi | `Báo cáo ngày/T<tháng>/<DDMM>/` (vd `T6/2006/`) |
+| 2 | Tách toàn bộ ảnh chứng từ từ DOCX | (tự động) |
+| 3 | **Đổi tên ảnh** theo quy tắc thống nhất | `YYYYMMDD_STT_LoaiChungTu` (vd `20260620_01_phieuchi`) |
+| 4 | Lưu ảnh vào thư mục chứng từ | `Chứng từ/<YYYY-MM-DD>/` |
+| 5 | Trích dữ liệu giao dịch từ **sổ quỹ** (ảnh) + chứng từ | sổ quỹ = số chốt: 8 nhóm thu/chi + **TỒN QUỸ CÔNG TY** |
+| 6 | Cập nhật dữ liệu vào 2 file | `cashflow.html` (mảng `NGAY`) + `index.html` (13 mảng + `bank`/`otherBanksByDay`) |
+| 7 | Nhúng ảnh chứng từ (base64) vào **đúng giao dịch** | mảng `imgs` trong `CT["YYYY-MM-DD"]` |
+| 8 | **Đối chiếu** | ① Biến động số dư (SMS) ② Chứng từ (Σ chi từ ảnh = Σ chi ngày → ✓) ③ cashflow.html ④ index.html |
+| 9 | **Xuất báo cáo kết quả** | ① Số GD cập nhật ② GD điều chỉnh ③ GD thiếu chứng từ ④ GD không khớp dữ liệu |
+
+**Quy tắc đổi tên ảnh (bước 3):** `YYYYMMDD_STT_LoaiChungTu`
+- `STT` = số thứ tự giao dịch trong ngày (theo sổ quỹ).
+- `LoaiChungTu` ∈ {`phieuchi`, `CK_TPBank`, `CK_VPBank`, `CK_BVBank`, `hoadon`, `bangke`, `ghichu`, `Ahamove`, `phieuthu`…}.
+- GD có nhiều ảnh → thêm hậu tố `_1`, `_2`. Vd: `20260620_01_CK_BVBank`, `20260620_07_phieuchi`.
+
+**Nguồn dữ liệu mỗi ngày:**
+- `Báo cáo ngày/T<tháng>/<DDMM>/` — DOCX phiếu + ảnh **sổ quỹ** (số chốt cân đối ngày).
+- `Báo cáo ngày/Ảnh biến động số dư/<DDMM>/` — ảnh **SMS ngân hàng**. **Không có** ngày nào → số dư NH ngày đó để `null` (KHÔNG bịa); KPI "Số dư ngân hàng" tự lùi về ngày gần nhất có số liệu.
+- `Chứng từ/<YYYY-MM-DD>/` — ảnh chứng từ đã tách & đổi tên (bước 3–4).
+
+> 💡 Phần "HẰNG NGÀY" bên dưới (Prompt 1–2–3) là cách thủ công chi tiết — vẫn đúng, nhưng **prompt 1 dòng ở trên đã gộp toàn bộ 9 bước**.
+
+---
+
 ## ⭐ HẰNG NGÀY — SOP cập nhật bằng Claude (không cần biết code)
 
 > **Dùng phần này mỗi ngày.** Chỉ cần copy prompt, **đổi ngày**, dán cho Claude (Cowork đã kết nối thư mục **HD**). Chi tiết trường & vị trí dữ liệu xem **mục B** bên dưới.
