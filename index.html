@@ -95,7 +95,7 @@
   <div class="grid panels" style="margin-top:16px">
     <div class="panel"><h3 id="t_fund">Tồn quỹ công ty cuối ngày (VND)</h3><svg id="cFund" viewBox="0 0 560 250" width="100%"></svg>
       <div class="lgd"><span><i style="background:#1F3864"></i>Tồn quỹ (01/06 → ngày chọn)</span></div></div>
-    <div class="panel"><h3>Thu vs Chi theo ngày (VND)</h3><svg id="cBars" viewBox="0 0 560 250" width="100%"></svg>
+    <div class="panel"><h3>Thu vs Chi theo ngày (VND · 10 ngày gần nhất)</h3><svg id="cBars" viewBox="0 0 560 250" width="100%"></svg>
       <div class="lgd"><span><i style="background:#2E7D32"></i>Tổng thu</span><span><i style="background:#C00000"></i>Tổng chi</span></div></div>
   </div>
 
@@ -353,8 +353,9 @@ function alertsFor(idx){
 
 function render(idx){
   const dn=dayNum[idx];
+  const WIN=10, cstart=Math.max(0, idx+1-WIN);
   document.getElementById('secDay').textContent=`Tóm tắt chu kỳ tiền trong ngày (${labels[idx]})`;
-  document.getElementById('t_fund').textContent=`Tồn quỹ công ty cuối ngày — 01/06 → ${labels[idx]} (VND)`;
+  document.getElementById('t_fund').textContent=`Tồn quỹ công ty cuối ngày — ${labels[cstart]} → ${labels[idx]} (VND · 10 ngày gần nhất)`;
   // KPIs
   const net=thu[idx]-chi[idx];
   document.getElementById('k_fund').textContent=fmt(fund[idx]);
@@ -372,8 +373,8 @@ function render(idx){
   document.getElementById('k_buf').style.color=buf<300000000?'var(--red)':'var(--amber)';
   // charts
   const sl=idx+1;
-  lineChart('cFund',labels.slice(0,sl),fund.slice(0,sl),'#1F3864');
-  barChart('cBars',labels.slice(0,sl),thu.slice(0,sl),chi.slice(0,sl),'#2E7D32','#C00000');
+  lineChart('cFund',labels.slice(cstart,sl),fund.slice(cstart,sl),'#1F3864');
+  barChart('cBars',labels.slice(cstart,sl),thu.slice(cstart,sl),chi.slice(cstart,sl),'#2E7D32','#C00000');
   donut('dIn','dInLeg',[{l:'Thu hoạt động (KH)',v:sumTo(thu_op,idx),c:'#2E7D32'},{l:'Thu vay & tài chính',v:sumTo(thu_fin,idx),c:'#C00000'},{l:'Thu khác/hoàn quỹ',v:sumTo(thu_oth,idx),c:'#BF8F00'}]);
   donut('dOut','dOutLeg',[{l:'Vật tư/NCC & vận hành',v:sumTo(chi_op,idx),c:'#2E5496'},{l:'Lãi vay & trả gốc',v:sumTo(chi_fin,idx),c:'#C00000'},{l:'Đầu tư (CAPEX)',v:sumTo(chi_cap,idx),c:'#1F7A7A'},{l:'Khác/Chi hộ',v:sumTo(chi_oth,idx),c:'#BF8F00'}]);
   // bank table — biến động 4 ngân hàng TRONG ngày chọn
