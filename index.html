@@ -117,19 +117,6 @@
     <div style="font-size:11.5px;color:var(--amber);margin-top:8px;font-style:italic">⚠ Liệt kê giao dịch số hóa từ ảnh SMS theo ngày chọn. Ngân hàng/ngày chưa số hóa chi tiết → hiện "Biến động ròng" (suy từ số dư cuối ngày) hoặc "Không có biến động" nếu số dư không đổi.</div>
   </div>
 
-  <h2 class="sec">Cảnh báo trọng yếu</h2>
-  <div class="grid alerts" id="alerts"></div>
-
-  <h2 class="sec">Hành động cần theo dõi & xử lý</h2>
-  <div class="actions">
-    <div class="act"><div class="n">1</div><div class="x"><b>ĐỐI SOÁT tiền mặt vs ngân hàng GẤP</b> — tồn quỹ theo SỔ ~1,25 tỷ nhưng số dư BVBank chỉ ~353tr (15/06 còn 161,5tr sau khi NH tự thu nợ 556,2tr). Còn 125,75tr Quỹ khách đến hạn 18/06.<span class="badge urgent">GẤP</span></div></div>
-    <div class="act"><div class="n">2</div><div class="x"><b>Lập lịch toàn bộ khoản vay</b> (NH + cá nhân): gốc, lãi, ngày đến hạn — để không bị động dòng tiền.<span class="badge soon">Tuần này</span></div></div>
-    <div class="act"><div class="n">3</div><div class="x"><b>Lập danh sách công nợ phải thu</b> (tạm ứng còn lại theo công trình) và <b>phải trả nhà cung cấp</b>.<span class="badge soon">Tuần này</span></div></div>
-    <div class="act"><div class="n">4</div><div class="x"><b>Tách số dư từng ngân hàng</b> cuối ngày (BVBank/VPBank/TPBank) thay vì gộp một dòng.</div></div>
-    <div class="act"><div class="n">5</div><div class="x"><b>Đặt ngưỡng tồn quỹ tối thiểu</b> (đề xuất 300tr) — chạm ngưỡng phải báo Chủ tịch ngay.</div></div>
-    <div class="act"><div class="n">6</div><div class="x"><b>Bắt đầu ghi nhận tồn kho vật tư</b> (gỗ, vải, phụ kiện) để tính đủ Chu kỳ tiền (DIO/DSO/DPO).</div></div>
-  </div>
-
   <h2 class="sec">Nhận định xu hướng dòng tiền 7–30 ngày</h2>
   <div class="trend">
     <h3 id="t_fcast" style="font-size:13.5px;color:var(--navy);margin-bottom:4px">Dự báo tồn quỹ 30 ngày</h3>
@@ -416,22 +403,6 @@ function forecast(startBal,baseDay){
   return {flbl,fval};
 }
 
-function alertsFor(idx){
-  const net=thu[idx]-chi[idx];const dn=dayNum[idx];
-  const netAlert=net<0
-    ?{c:'l1',t:`🔴 Dòng tiền âm ngày ${labels[idx]}`,d:`Chi ${fmtShort(chi[idx])} &gt; Thu ${fmtShort(thu[idx])} ⇒ âm ${fmtShort(Math.abs(net))} trong ngày. Cần soát các khoản chi lớn & nguồn bù.`}
-    :{c:'ok',t:`🟢 Dòng tiền dương ngày ${labels[idx]}`,d:`Thu ${fmtShort(thu[idx])} ≥ Chi ${fmtShort(chi[idx])} ⇒ thặng dư ${fmtShort(net)} trong ngày.`};
-  return [
-   {c:'l1',t:'🔴 Lệch tồn quỹ SỔ vs số dư NH thực',d:`Tồn quỹ theo SỔ ${fmtShort(fund[idx])}, nhưng BVBank chỉ còn ${bankEOD[idx]!==null?fmtShort(bankEOD[idx]):'(chưa có)'} (15/06 còn 161,5tr sau khi NH tự thu nợ 556,2tr). Tổng tiền thực ở NH thấp hơn nhiều tồn quỹ sổ — cần đối soát tiền mặt vs ngân hàng GẤP.`},
-   {c:'l2',t:'🟠 Nợ đến hạn 18/06 còn 125,75tr',d:`Quỹ khách TK…003 556,2tr đã bị NH THU SỚM 15/06; còn TK…004 125,75tr đến hạn 18/06 ⇒ áp lực 18/06 nhẹ hơn. Đệm sau trả nợ theo sổ ~${fmtShort(fund[idx]-DUE)}.`},
-   {c:'l1',t:'🔴 Phụ thuộc vay đảo nợ',d:'11/06 vay a.Dũng 800tr đảo NH Bản Việt; 16/06 ĐẢO NỢ NH Bản Việt 900tr (gói gỗ TAT) + phí giải ngân ~85,8tr. Vòng xoay đảo nợ và phí cao = căng thanh khoản, chi phí vốn lớn.'},
-   {c:'l2',t:'🟠 Gánh nặng lãi vay',d:'Lãi VPBank tháng 5 đã trả 69,35tr + lãi a.Quyết 9,5tr (≈79tr/kỳ). Dư nợ VPBank ~1,7 tỷ. Theo dõi lịch lãi tháng 6.'},
-   netAlert,
-   {c:'l3',t:'🟡 Quỹ & ngân hàng chưa tách bạch',d:'Sổ quỹ trộn tiền mặt + nhiều NH + giao dịch UNC. Cần tách dòng tiền mặt vs ngân hàng để biết thanh khoản thực.'},
-   {c:'ok',t:'🟢 Điểm tích cực',d:`Tạm ứng KH mạnh (Hexa, Lâm Khang, MT, ADZ): thu hoạt động lũy kế ${fmtShort(sumTo(thu_op,idx))}. Giữ nhịp tạm ứng thì đủ trang trải vận hành.`},
-  ];
-}
-
 function render(idx){
   const dn=dayNum[idx];
   const WIN=10, cstart=Math.max(0, idx+1-WIN);
@@ -488,8 +459,6 @@ function render(idx){
   const _bo=banksOfDay(idx);
   document.querySelector('#bankDayT tbody').innerHTML=BANK_LIST.map(n=>`<tr><td style="text-align:left">${n}${BANK_ACC[n]?` <span style="color:#98A2B3;font-size:11px">(${BANK_ACC[n]})</span>`:''}</td><td>${_bo[n]!=null?'<b>'+fmt(_bo[n])+'</b>':'<span style="color:#98A2B3">(chưa có)</span>'}</td></tr>`).join('');
   document.getElementById('bankDayTotal').textContent=fmt(bankTotalOfDay(idx));
-  // alerts
-  document.getElementById('alerts').innerHTML=alertsFor(idx).map(a=>`<div class="alert ${a.c}"><div class="t">${a.t}</div><div class="d">${a.d}</div></div>`).join('');
   // forecast + narrative
   document.getElementById('t_fcast').textContent=`Dự báo tồn quỹ 30 ngày từ ${labels[idx]} (giả định thu 100tr/ngày, chi 110tr/ngày)`;
   const fcr=forecast(fund[idx],dn);
