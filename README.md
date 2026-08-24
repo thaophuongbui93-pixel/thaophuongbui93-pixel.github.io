@@ -13,6 +13,8 @@ website/
 ```
 
 > ⚠️ Không đổi tên `index.html` (đây là trang chủ). Không xóa `.nojekyll`.
+>
+> ⚠️ **cashflow.html** do pipeline *Cash conversion cycle monitoring* dựng (nhúng ảnh chứng từ base64) — hiện ~75 MB, tới 21/08. **Phải giữ < 90 MB** (nén/resize ảnh) vì GitHub chặn file > 100 MB.
 
 ## Thông tin cố định
 
@@ -54,9 +56,15 @@ Sau khi site mới chạy ổn → **xóa repo cũ tên `index.html`** trên Git
 
 > **Prompt vận hành duy nhất** (chỉ cần dán, đổi ngày):
 >
-> *"Cập nhật website cho ngày [DD/MM/YYYY] theo README: đọc dữ liệu từ Báo cáo ngày và Chứng từ, tách ảnh nếu chưa có, cập nhật cashflow.html và index.html, nhúng chứng từ, đối chiếu dữ liệu và báo cáo kết quả."*
+> *"Cập nhật website cho ngày [DD/MM/YYYY] theo README. NGUỒN: 'Báo cáo ngày/T<tháng>/<DDMM>' (sổ quỹ .xlsx + phiếu .docx) và 'Báo cáo ngày/Ảnh biến động số dư/T<tháng>/<DDMM>' (SMS ngân hàng). Tự TÁCH ảnh phiếu từ .docx (không cần upload vào Chứng từ), cập nhật cashflow.html + index.html, nhúng chứng từ, đối chiếu và báo cáo."*
 >
 > Claude tự thực hiện trọn 9 bước dưới đây, không cần hướng dẫn thêm.
+
+> **⚠️ ĐƯỜNG DẪN NGUỒN (áp dụng từ T8/2026) — dữ liệu mỗi ngày chỉ nằm ở 2 nơi:**
+> 1. `Báo cáo ngày/T<tháng>/<DDMM>/` (vd `T8/2208/`) — file **sổ quỹ .xlsx** + file **phiếu .docx** (Claude TỰ tách ảnh phiếu từ .docx).
+> 2. `Báo cáo ngày/Ảnh biến động số dư/T<tháng>/<DDMM>/` (vd `T8/2208/`) — ảnh **SMS ngân hàng**.
+>
+> **KHÔNG** yêu cầu người dùng tạo/upload vào `Chứng từ/2026-MM-DD/`. Thư mục `Chứng từ/` chỉ là nơi Claude tự LƯU ảnh đã tách (nếu cần), KHÔNG phải nguồn upload.
 
 | Bước | Việc | Vị trí / Quy tắc |
 |---|---|---|
@@ -75,10 +83,10 @@ Sau khi site mới chạy ổn → **xóa repo cũ tên `index.html`** trên Git
 - `LoaiChungTu` ∈ {`phieuchi`, `CK_TPBank`, `CK_VPBank`, `CK_BVBank`, `hoadon`, `bangke`, `ghichu`, `Ahamove`, `phieuthu`…}.
 - GD có nhiều ảnh → thêm hậu tố `_1`, `_2`. Vd: `20260620_01_CK_BVBank`, `20260620_07_phieuchi`.
 
-**Nguồn dữ liệu mỗi ngày:**
-- `Báo cáo ngày/T<tháng>/<DDMM>/` — DOCX phiếu + ảnh **sổ quỹ** (số chốt cân đối ngày).
-- `Báo cáo ngày/Ảnh biến động số dư/<DDMM>/` — ảnh **SMS ngân hàng**. **Không có** ngày nào → số dư NH ngày đó để `null` (KHÔNG bịa); KPI "Số dư ngân hàng" tự lùi về ngày gần nhất có số liệu.
-- `Chứng từ/<YYYY-MM-DD>/` — ảnh chứng từ đã tách & đổi tên (bước 3–4).
+**Nguồn dữ liệu mỗi ngày (người dùng chỉ upload vào 2 thư mục này):**
+- `Báo cáo ngày/T<tháng>/<DDMM>/` (vd `T8/2208/`) — file **sổ quỹ** `Báo cáo quỹ ngày DD.MM.YYYY.xlsx` (8 nhóm thu/chi + TỒN QUỸ) + file **phiếu** `Phiếu thu chi bản chụp ngàyDD.MM.YYYY.docx` (Claude tự tách ảnh phiếu từ .docx).
+- `Báo cáo ngày/Ảnh biến động số dư/T<tháng>/<DDMM>/` (vd `T8/2208/`) — ảnh **SMS ngân hàng**. **Không có** ngày nào → số dư NH để `null` (KHÔNG bịa).
+- `Chứng từ/<YYYY-MM-DD>/` — chỉ là nơi Claude **tự lưu** ảnh đã tách (bước 3–4), **KHÔNG phải** nơi upload dữ liệu nguồn.
 
 > 💡 Phần "HẰNG NGÀY" bên dưới (Prompt 1–2–3) là cách thủ công chi tiết — vẫn đúng, nhưng **prompt 1 dòng ở trên đã gộp toàn bộ 9 bước**.
 
@@ -183,10 +191,10 @@ Mỗi ngày lấy số liệu từ thư mục `Báo cáo ngày/` rồi cập nh�
 
 | Nguồn | Vị trí thư mục | Cung cấp số gì |
 |---|---|---|
-| Sổ quỹ + phiếu thu/chi trong ngày | `Báo cáo ngày/T6/<DDMM>/` (vd `T6/1706/`) | 7 nhóm thu/chi + **TỒN QUỸ CÔNG TY** cuối ngày + ảnh chứng từ |
-| Ảnh biến động số dư (SMS ngân hàng) | `Báo cáo ngày/Ảnh biến động số dư/<DDMM>/` | Số dư cuối ngày từng ngân hàng + các giao dịch BVBank |
+| Sổ quỹ (.xlsx) + phiếu thu/chi (.docx) | `Báo cáo ngày/T<tháng>/<DDMM>/` (vd `T8/2208/`) | 7 nhóm thu/chi + **TỒN QUỸ CÔNG TY** cuối ngày + ảnh phiếu (trong .docx) |
+| Ảnh biến động số dư (SMS ngân hàng) | `Báo cáo ngày/Ảnh biến động số dư/T<tháng>/<DDMM>/` (vd `T8/2208/`) | Số dư cuối ngày từng ngân hàng + các giao dịch BVBank |
 
-> `<DDMM>` = ngày + tháng, vd 17/06 → thư mục `1706`. (T6 = tháng 6.)
+> `T<tháng>` = `T5/T6/T7/T8…`; `<DDMM>` = ngày+tháng (vd 22/08 → `T8/2208`). **Số chốt:** TỒN QUỸ CÔNG TY = trường `fund`.
 > **Số chốt quan trọng nhất:** dòng **TỒN QUỸ CÔNG TY** trên ảnh sổ quỹ — phải khớp với trường `fund` trong cả 2 file.
 
 ### B2. Các trường dữ liệu cần cập nhật
